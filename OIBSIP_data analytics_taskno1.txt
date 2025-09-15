@@ -1,0 +1,87 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+df = pd.read_csv('/content/retail_sales_dataset.csv')
+
+# Display basic information
+print(df.info())
+print(df.head())
+print(df.describe())
+# Check for missing values
+print(df.isnull().sum())
+
+# Check for duplicates
+print(df.duplicated().sum())
+
+# Convert Date to datetime format
+df['Date'] = pd.to_datetime(df['Date'])
+
+# Extract month and day of week for time series analysis
+df['Month'] = df['Date'].dt.month
+df['DayOfWeek'] = df['Date'].dt.day_name()
+# Basic statistics for numerical columns
+print(df[['Age', 'Quantity', 'Price per Unit', 'Total Amount']].describe())
+
+# Statistics by product category
+print(df.groupby('Product Category')[['Quantity', 'Price per Unit', 'Total Amount']].describe())
+
+# Statistics by gender
+print(df.groupby('Gender')[['Quantity', 'Price per Unit', 'Total Amount']].describe())
+# Monthly sales trends
+monthly_sales = df.groupby('Month')['Total Amount'].sum()
+plt.figure(figsize=(10,5))
+monthly_sales.plot(kind='line', marker='o')
+plt.title('Monthly Sales Trends')
+plt.ylabel('Total Sales Amount')
+plt.xlabel('Month')
+plt.grid()
+plt.show()
+
+# Daily sales trends
+daily_sales = df.groupby('DayOfWeek')['Total Amount'].sum().reindex(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'])
+plt.figure(figsize=(10,5))
+daily_sales.plot(kind='bar')
+plt.title('Sales by Day of Week')
+plt.ylabel('Total Sales Amount')
+plt.show()
+# Age distribution of customers
+plt.figure(figsize=(10,5))
+sns.histplot(df['Age'], bins=20, kde=True)
+plt.title('Customer Age Distribution')
+plt.show()
+
+# Product category distribution
+plt.figure(figsize=(8,5))
+df['Product Category'].value_counts().plot(kind='pie', autopct='%1.1f%%')
+plt.title('Product Category Distribution')
+plt.show()
+
+# Top spending customers
+top_customers = df.groupby('Customer ID')['Total Amount'].sum().sort_values(ascending=False).head(10)
+plt.figure(figsize=(10,5))
+top_customers.plot(kind='bar')
+plt.title('Top 10 Customers by Total Spending')
+plt.ylabel('Total Amount Spent')
+plt.show()
+# Price distribution by category
+plt.figure(figsize=(10,5))
+sns.boxplot(x='Product Category', y='Price per Unit', data=df)
+plt.title('Price Distribution by Product Category')
+plt.show()
+
+# Relationship between quantity and total amount
+plt.figure(figsize=(10,5))
+sns.scatterplot(x='Quantity', y='Total Amount', hue='Product Category', data=df)
+plt.title('Quantity vs Total Amount by Product Category')
+plt.show()
+# Age groups
+df['Age Group'] = pd.cut(df['Age'], bins=[18,25,35,45,55,65], labels=['18-25','26-35','36-45','46-55','56-65'])
+
+# Spending by age group and gender
+age_gender_spending = df.groupby(['Age Group', 'Gender'])['Total Amount'].mean().unstack()
+age_gender_spending.plot(kind='bar', figsize=(10,5))
+plt.title('Average Spending by Age Group and Gender')
+plt.ylabel('Average Amount Spent')
+plt.show()
